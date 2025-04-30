@@ -1,1 +1,3 @@
-TP-Requests>=2024.2.9
+json-duplicate-keys>=2024.12.12
+TP-HTTP-Request-Response-Parser>=2025.4.30
+TP-Requests>=2025.4.30

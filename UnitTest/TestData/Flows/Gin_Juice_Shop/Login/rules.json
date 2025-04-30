@@ -1,0 +1,71 @@
+{
+	"name": "Login",
+	"environments": {
+		"libs": [
+		],
+		"vars": {
+			"username": {
+				"value": "carlos",
+				"runCode": false
+			},
+			"password": {
+				"value": "hunter2",
+				"runCode": false
+			},
+			"AWSALB": {
+				"value": "TP_HTTP_RESPONSE_PARSER(Flows['1']['rawResponse']).response_cookies.get('AWSALB')['value']",
+				"runCode": true
+			},
+			"AWSALBCORS": {
+				"value": "TP_HTTP_RESPONSE_PARSER(Flows['1']['rawResponse']).response_cookies.get('AWSALBCORS')['value']",
+				"runCode": true
+			},
+			"session": {
+				"value": "TP_HTTP_RESPONSE_PARSER(Flows['1']['rawResponse']).response_cookies.get('session')['value']",
+				"runCode": true
+			},
+			"csrf": {
+				"value": "re.findall('<input required type=\"hidden\" name=\"csrf\" value=\"(.+?)\">',Flows['1']['rawResponse'])[0]",
+				"runCode": true
+			}
+		}
+	},
+	"flows": {
+		"1": {
+			"Host": "ginandjuice.shop",
+			"Port": 443,
+			"Scheme": "https",
+			"PathParams": {
+			},
+			"QueryParams": {
+			},
+			"HTTPHeaders": {
+			},
+			"HTTPCookies": {
+			},
+			"RequestBody": {
+			}
+		},
+		"2": {
+			"Host": "ginandjuice.shop",
+			"Port": 443,
+			"Scheme": "https",
+			"PathParams": {
+			},
+			"QueryParams": {
+			},
+			"HTTPHeaders": {
+			},
+			"HTTPCookies": {
+				"AWSALB": "{AWSALB}",
+				"AWSALBCORS": "{AWSALBCORS}",
+				"session": "{session}"
+			},
+			"RequestBody": {
+				"csrf": "{csrf}",
+				"username": "{username}",
+				"password": "{password}"
+			}
+		}
+	}
+}

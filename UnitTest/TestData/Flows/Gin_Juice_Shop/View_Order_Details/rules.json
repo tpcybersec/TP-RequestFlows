@@ -1,0 +1,68 @@
+{
+	"name": "View Order Details",
+	"environments": {
+		"libs": [
+		],
+		"vars": {
+			"orderId": {
+				"value": "re.findall('<a href=\"/order/details\\?orderId=(\\d+)\">Order details</a>',Flows['1']['rawResponse'])[0]",
+				"runCode": true
+			}
+		}
+	},
+	"flows": {
+		"1": {
+			"Host": "ginandjuice.shop",
+			"Port": 443,
+			"Scheme": "https",
+			"PathParams": {
+			},
+			"QueryParams": {
+			},
+			"HTTPHeaders": {
+			},
+			"HTTPCookies": {
+				"AWSALB": "AUTO_LOGIN||AWSALB",
+				"AWSALBCORS": "AUTO_LOGIN||AWSALBCORS",
+				"session": "AUTO_LOGIN||session"
+			},
+			"RequestBody": {
+			}
+		},
+		"2": {
+			"Host": "ginandjuice.shop",
+			"Port": 443,
+			"Scheme": "https",
+			"PathParams": {
+			},
+			"QueryParams": {
+				"orderId": "{orderId}"
+			},
+			"HTTPHeaders": {
+			},
+			"HTTPCookies": {
+				"AWSALB": "AUTO_LOGIN||AWSALB",
+				"AWSALBCORS": "AUTO_LOGIN||AWSALBCORS",
+				"session": "AUTO_LOGIN||session"
+			},
+			"RequestBody": {
+			}
+		}
+	},
+	"AutoLogin": {
+		"ObtainSessionTokenFlow": ".\\TestData\\Flows\\Gin_Juice_Shop\\Login",
+		"Matcher": {
+			"CONDITION": "AND",
+			"PATTERN": [
+				"HTTP/(1\\.1|2) 302 Found",
+				"Location: /login"
+			]
+		},
+		"Extractors": {
+			"AWSALB": "TP_HTTP_RESPONSE_PARSER(Flows_AutoLogin['2']['rawResponse']).response_cookies.get('AWSALB')['value']",
+			"AWSALBCORS": "TP_HTTP_RESPONSE_PARSER(Flows_AutoLogin['2']['rawResponse']).response_cookies.get('AWSALBCORS')['value']",
+			"session": "TP_HTTP_RESPONSE_PARSER(Flows_AutoLogin['2']['rawResponse']).response_cookies.get('session')['value']"
+		}
+	},
+	"PATTERN_SuccessFlows": "<div>Order no: \\d+</div>"
+}

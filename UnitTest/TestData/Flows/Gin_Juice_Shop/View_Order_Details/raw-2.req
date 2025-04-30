@@ -1,0 +1,17 @@
+GET /order/details?orderId=0254809 HTTP/2
+Host: ginandjuice.shop
+Cookie: AWSALB=KQahg6dnpBusvcp39vUhfPoGbbWWo3xxEUu1ce7G+EAZ+s4Qu/0Z0GRA9ZQCyqauY27qmKNz1CUZ8IZZoR/Qh7RXlv2z2P3F6ia77yMsjohUDyZvV1CG3nFKWfCI; AWSALBCORS=KQahg6dnpBusvcp39vUhfPoGbbWWo3xxEUu1ce7G+EAZ+s4Qu/0Z0GRA9ZQCyqauY27qmKNz1CUZ8IZZoR/Qh7RXlv2z2P3F6ia77yMsjohUDyZvV1CG3nFKWfCI; session=5KT1VAByPgcGL8Zzg7WrEUclablsCvm6
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:137.0) Gecko/20100101 Firefox/137.0
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+Accept-Language: en-US,en;q=0.5
+Accept-Encoding: gzip, deflate, br
+Dnt: 1
+Referer: https://ginandjuice.shop/my-account
+Upgrade-Insecure-Requests: 1
+Sec-Fetch-Dest: document
+Sec-Fetch-Mode: navigate
+Sec-Fetch-Site: same-origin
+Sec-Fetch-User: ?1
+Priority: u=0, i
+Te: trailers
+

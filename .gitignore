@@ -1,7 +1,6 @@
 *
 !/.gitignore
 !/LICENSE
-!/MANIFEST.in
 !/README.md
 !/requirements.txt
 !/SECURITY.md
@@ -10,3 +9,5 @@
 !/TP_RequestFlows/__init__.py
 !/UnitTest/
 !/UnitTest/**
+!/assets/
+!/assets/**
