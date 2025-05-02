@@ -6,7 +6,7 @@ setuptools.setup(
 	author="TP Cyber Security",
 	license="MIT",
 	author_email="tpcybersec2023@gmail.com",
-	description="",
+	description="A Python library for sending raw HTTP requests in a predefined sequence configured via a rules.json file. Supports automatic re-login when the session token expires",
 	long_description=open("README.md").read(),
 	long_description_content_type="text/markdown",
 	install_requires=open("requirements.txt").read().split(),

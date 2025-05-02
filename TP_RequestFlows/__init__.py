@@ -278,7 +278,7 @@ def run_flows(FlowFolder, add_object=dict(), update_object=dict(), delete_object
 				Response_Status = f"| \x1b[37m{ResponseParser.response_statusCode} {ResponseParser.response_statusText} \x1b[0m"
 
 			RequestTime = f"| RT: {Flows[reqNum]['RequestTime']}ms"
-			if Flows[reqNum]['RequestTime'] > sleeptime * 1000 or Flows[reqNum]['RequestTime'] < 0: RequestTime = f"| \x1b[1;31mRT: {Flows[reqNum]['RequestTime']}ms\x1b[0m"
+			if Flows[reqNum]['RequestTime'] >= sleeptime * 1000 or Flows[reqNum]['RequestTime'] < 0: RequestTime = f"| \x1b[1;31mRT: {Flows[reqNum]['RequestTime']}ms\x1b[0m"
 
 			print(f"[\x1b[34m{datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\x1b[0m] " +
 				RequestMethod + " " +
