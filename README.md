@@ -60,15 +60,15 @@ python setup.py install
   ├── raw-[reqNum].req
   └── rules.json
   ```
-- `add_object`: Add parameters to `QueryParams`, `HTTPHeaders`, `HTTPCookies`, `RequestBody` of requests at runtime.
-- `update_object`: Update parameter values for `RequestMethod`, `RequestPath`, `PathParams`, `QueryParams`, `RequestFragment`, `HTTPVersion`, `HTTPHeaders`, `HTTPCookies`, `RequestBody` of requests at runtime.
-- `delete_object`: Remove parameters from `QueryParams`, `HTTPHeaders`, `HTTPCookies`, `RequestBody` of requests at runtime.
+- [add_object](#add_object---add-new-parameters-dynamically-at-runtime): Add parameters to `QueryParams`, `HTTPHeaders`, `HTTPCookies`, `RequestBody` of requests at runtime.
+- [update_object](#update_object--modify-existing-parameters-in-real-time): Update parameter values for `RequestMethod`, `RequestPath`, `PathParams`, `QueryParams`, `RequestFragment`, `HTTPVersion`, `HTTPHeaders`, `HTTPCookies`, `RequestBody` of requests at runtime.
+- [delete_object](#delete_object--remove-specific-parameters-from-requests): Remove parameters from `QueryParams`, `HTTPHeaders`, `HTTPCookies`, `RequestBody` of requests at runtime.
 - `ReqTimeout`: Timeout in seconds for each HTTP request.
 - `ReqDelaytime`: Delay (in seconds) between consecutive requests.
 - `sleeptime`: If response time exceeds or equals this value, the RT will be highlighted in red.
 - `separator`, `parse_index`, `dupSign_start`, `dupSign_end`, `ordered_dict`: Refer to the [json-duplicate-keys](https://github.com/truocphan/json-duplicate-keys) project for handling complex JSON with duplicate keys.
 - `update_content_length`: Automatically updates the `Content-Length` header when modified.
-- `proxy_server`: Proxy configuration for sending requests. Format: `{ "host": "PROXY-HOST", "port": PROXY-PORT }`.
+- `proxy_server`: Optional invisible proxy configuration for routing all HTTP requests through a proxy. Format: `{ "host": "PROXY-HOST", "port": PROXY-PORT }`.
 - `verbose`: Show debug information and request status during execution.
 
 ### Detailed configuration of `rules.json`
@@ -104,25 +104,55 @@ The `rules.json` file defines the flow logic and dynamic behavior for the sequen
   - `libs` (optional): A list of Python modules to dynamically import. Useful for using built-in functions or custom logic in variable definitions.
     ```
     "libs": [
-      "import re",
+      "from TP_Generator import Utils",
       "from urllib.parse import quote"
     ]
     ```
-  - `vars`: Define reusable variables, either static or dynamically extracted from previous responses. Each variable consists of:
-    - `value`: A static string or Python expression.
-    - `runCode`: Set to true if value is a Python expression that should be evaluated at runtime. **Note**: When `runCode: true`, the expression has access to: _`Flows`: A dictionary containing all previous request/response data_ and _Python libraries listed in libs._
-    ```
-    "vars": {
-      "csrf_token": {
-        "value": "re.search('name=\"csrf\" value=\"(.*?)\"', Flows['1']['rawResponse']).group(1)",
-        "runCode": true
-      },
-      "static_user": {
-        "value": "admin",
-        "runCode": false
-      }
-    }
-    ```
+  - `vars`: Define reusable variables that can be used as placeholders (`{varName}`) in the flow. Each variable can be configured in one of three ways:
+    - **Static Values**: provide a fixed string value with `"runCode": false`
+       ```
+       "static_user": {
+         "value": "admin",
+         "runCode": false
+       }
+       ```
+    - **Dynamic Values via Python Expression**: use `"runCode": true` and provide a Python expression in `"value"`. The expression is evaluated at runtime with access to:
+       - `Flows`: A dictionary of all previous request/response data.
+       - Imported modules in `libs`
+       ```
+       "csrf_token": {
+         "value": "re.search('name=\"csrf\" value=\"(.*?)\"', Flows['1']['rawResponse']).group(1)",
+         "runCode": true
+       }
+       ```
+    - **Dynamic Values with Condition**: A variable in `vars` can be defined dynamically by looping through a list with an optional condition:
+      - `LOOPVAR`: An expression that returns a list of items to iterate.
+      - `CONDITION`: A Python expression evaluated on each item.
+      - `value`: An expression that extracts the desired value from the first item that satisfies the condition (evaluated using `LOOPDATA`).
+      - `LOOPDATA` (implicit): Automatically refers to the current item in the loop.
+      - `"runCode": true`: Required to evaluate `LOOPVAR`, `CONDITION`, and `value` as executable code.
+      
+        **Behavior**:
+        - Evaluates `LOOPVAR` to get a list.
+        - Iterates through the list:
+          - Sets `LOOPDATA` to the current item.
+          - If `CONDITION` evaluates to `True`, evaluates `value` and immediately stops the loop.
+        - If no item matches, the result will be `None`.
+
+        **Example**:
+          ```
+          "accNo": {
+            "LOOPVAR": "TP_HTTP_RESPONSE_PARSER(Flows['1']['rawResponse']).response_body.get('data||accList')['value']",
+            "CONDITION": "int(LOOPDATA['balanceAval']) > 1000",
+            "value": "LOOPDATA['accNo']",
+            "runCode": true
+          }
+          ```
+        **Explanation**:
+        - Iterates through the `accList` in the response body.
+        - Finds the first account with `balanceAval > 1000`.
+        - Assigns `accNo` to that account's `accNo`.
+        - If no such account exists, `accNo` will be `None`.
 - `flows`: The `flows` section defines the actual HTTP request sequence. Each key ("1", "2", ...) represents a request step and contains request components such as host, port, headers, body, and more.
   ```
   "1": {
@@ -165,6 +195,13 @@ The `rules.json` file defines the flow logic and dynamic behavior for the sequen
   "PATTERN_SuccessFlows": "Welcome, admin"
   ```
   If the pattern matches, the response is considered successful. Useful in automation and scripting scenarios.
+
+### Example
+```
+import TP_RequestFlows
+
+TP_RequestFlows.run_flows("./FlowName")
+```
 
 ---
 ## Advanced Usage
@@ -276,9 +313,9 @@ The `add_object` parameter allows you to dynamically add new key-value pairs int
   }
   ```
   This will:
-    - Add `debug=true` to the query string of request `1`.
-    - Inject `X-Custom-Header: InjectedValue` into headers of request `1`.
-    - Add an `extraField` to the request body of request `3` using a variable name `csrf_token`.
+  - Add `debug=true` to the query string of request `1`.
+  - Inject `X-Custom-Header: InjectedValue` into headers of request `1`.
+  - Add an `extraField` to the request body of request `3` using a variable name `csrf_token`.
 
 ### `update_object` – Modify existing parameters in real-time
 The `update_object` parameter allows you to dynamically change existing values of various components in a request, overriding what's defined in the raw files or `rules.json`
@@ -414,6 +451,10 @@ The `delete_object` parameter lets you delete specific keys from request compone
 
 ---
 ## CHANGELOG
+#### [TP-RequestFlows v2025.5.18](https://github.com/tpcybersec/TP-RequestFlows/tree/2025.5.18)
+- [**Added**] Support for dynamic variable declaration in `vars` using list iteration with conditions (`LOOPVAR`, `CONDITION`, `value`, `LOOPDATA`, `runCode`).
+- [**Fixed**] Several encoding issues when sending or processing request data.
+
 #### [TP-RequestFlows v2025.4.30](https://github.com/tpcybersec/TP-RequestFlows/tree/2025.4.30)
 - **Raw Request Flow Execution** via `rules.json` and `raw-*.req` files.
 - **Dynamic Variable Injection** using `{varName}` syntax in requests.

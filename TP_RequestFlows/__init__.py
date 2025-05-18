@@ -1,5 +1,5 @@
 from TP_Requests.http import TP_HTTP_REQUEST
-from TP_HTTP_Request_Response_Parser import TP_HTTP_RESPONSE_PARSER
+from TP_HTTP_Request_Response_Parser import TP_HTTP_REQUEST_PARSER, TP_HTTP_RESPONSE_PARSER
 import json_duplicate_keys as jdks
 import glob, os, datetime, re, time
 
@@ -15,7 +15,14 @@ def kwvars(environments, vars=dict()):
 	for name in environments["vars"]:
 		if environments["vars"][name]["runCode"]:
 			try:
-				vars[name] = eval(environments["vars"][name]["value"])
+				vars[name] = None
+				if "LOOPVAR" in environments["vars"][name] and "CONDITION" in environments["vars"][name]:
+					for LOOPDATA in eval(environments["vars"][name]["LOOPVAR"]):
+						if eval(environments["vars"][name]["CONDITION"]):
+							vars[name] = eval(environments["vars"][name]["value"])
+							break
+				else:
+					vars[name] = eval(environments["vars"][name]["value"])
 			except Exception as e:
 				vars[name] = None
 		else:
@@ -32,7 +39,11 @@ def run_flows(FlowFolder, add_object=dict(), update_object=dict(), delete_object
 	i = 0
 	while i < total_rawReq:
 		reqNum = str(i+1)
-		rawRequest = open(os.path.join(FlowFolder, "raw-{}.req".format(reqNum))).read()
+		try:
+			rawRequest = open(os.path.join(FlowFolder, "raw-{}.req".format(reqNum))).read()
+		except Exception as e:
+			rawRequest = open(os.path.join(FlowFolder, "raw-{}.req".format(reqNum)), "rb").read()
+
 		req = TP_HTTP_REQUEST(rawRequest, separator=separator, parse_index=parse_index, dupSign_start=dupSign_start, dupSign_end=dupSign_end, ordered_dict=ordered_dict)
 
 		if "PathParams" in RequestRules.get("flows"+separator+reqNum)["value"]:
@@ -264,16 +275,19 @@ def run_flows(FlowFolder, add_object=dict(), update_object=dict(), delete_object
 			else:
 				RequestMethod = f"\x1b[30;107m {req.RequestParser.request_method} \x1b[0m"
 
-			if 100 <= ResponseParser.response_statusCode < 200:
-				Response_Status = f"| \x1b[34m{ResponseParser.response_statusCode} {ResponseParser.response_statusText} \x1b[0m"
-			elif 200 <= ResponseParser.response_statusCode < 300:
-				Response_Status = f"| \x1b[32m{ResponseParser.response_statusCode} {ResponseParser.response_statusText} \x1b[0m"
-			elif 300 <= ResponseParser.response_statusCode < 400:
-				Response_Status = f"| \x1b[36m{ResponseParser.response_statusCode} {ResponseParser.response_statusText} \x1b[0m"
-			elif 400 <= ResponseParser.response_statusCode < 500:
-				Response_Status = f"| \x1b[33m{ResponseParser.response_statusCode} {ResponseParser.response_statusText} \x1b[0m"
-			elif 500 <= ResponseParser.response_statusCode < 600:
-				Response_Status = f"| \x1b[31m{ResponseParser.response_statusCode} {ResponseParser.response_statusText} \x1b[0m"
+			if type(ResponseParser.response_statusCode) == int:
+				if 100 <= ResponseParser.response_statusCode < 200:
+					Response_Status = f"| \x1b[34m{ResponseParser.response_statusCode} {ResponseParser.response_statusText} \x1b[0m"
+				elif 200 <= ResponseParser.response_statusCode < 300:
+					Response_Status = f"| \x1b[32m{ResponseParser.response_statusCode} {ResponseParser.response_statusText} \x1b[0m"
+				elif 300 <= ResponseParser.response_statusCode < 400:
+					Response_Status = f"| \x1b[36m{ResponseParser.response_statusCode} {ResponseParser.response_statusText} \x1b[0m"
+				elif 400 <= ResponseParser.response_statusCode < 500:
+					Response_Status = f"| \x1b[33m{ResponseParser.response_statusCode} {ResponseParser.response_statusText} \x1b[0m"
+				elif 500 <= ResponseParser.response_statusCode < 600:
+					Response_Status = f"| \x1b[31m{ResponseParser.response_statusCode} {ResponseParser.response_statusText} \x1b[0m"
+				else:
+					Response_Status = f"| \x1b[37m{ResponseParser.response_statusCode} {ResponseParser.response_statusText} \x1b[0m"
 			else:
 				Response_Status = f"| \x1b[37m{ResponseParser.response_statusCode} {ResponseParser.response_statusText} \x1b[0m"
 
@@ -296,12 +310,18 @@ def run_flows(FlowFolder, add_object=dict(), update_object=dict(), delete_object
 			if CONDITION == "OR":
 				flag_AutoLogin = False
 				for pattern in RequestRules.get("AutoLogin||Matcher||PATTERN")["value"]:
+					if type(Flows[reqNum]["rawResponse"]) == bytes:
+						pattern = pattern.encode()
+
 					if re.search(pattern, Flows[reqNum]["rawResponse"]):
 						flag_AutoLogin = True
 						break
 			elif CONDITION == "AND":
 				flag_AutoLogin = True
 				for pattern in RequestRules.get("AutoLogin||Matcher||PATTERN")["value"]:
+					if type(Flows[reqNum]["rawResponse"]) == bytes:
+						pattern = pattern.encode()
+
 					if not re.search(pattern, Flows[reqNum]["rawResponse"]):
 						flag_AutoLogin = False
 						break
