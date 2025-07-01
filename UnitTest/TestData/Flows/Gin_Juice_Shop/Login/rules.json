@@ -34,6 +34,7 @@
 			"Host": "ginandjuice.shop",
 			"Port": 443,
 			"Scheme": "https",
+			"Coding": "utf-8",
 			"PathParams": {
 			},
 			"QueryParams": {
@@ -49,6 +50,7 @@
 			"Host": "ginandjuice.shop",
 			"Port": 443,
 			"Scheme": "https",
+			"Coding": "utf-8",
 			"PathParams": {
 			},
 			"QueryParams": {

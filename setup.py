@@ -1,8 +1,9 @@
+from TP_RequestFlows import TP_RequestFlows_VERSION
 import setuptools
 
 setuptools.setup(
 	name="TP-RequestFlows",
-	version="2025.5.18",
+	version=TP_RequestFlows_VERSION,
 	author="TP Cyber Security",
 	license="MIT",
 	author_email="tpcybersec2023@gmail.com",
@@ -15,5 +16,5 @@ setuptools.setup(
 		"Programming Language :: Python :: 3",
 	],
 	keywords=["TPCyberSec", "TP-RequestFlows", "Request Flows"],
-	packages=["TP_RequestFlows"],
+	packages=setuptools.find_packages(),
 )

@@ -1,50 +1,56 @@
+TP_RequestFlows_VERSION = "2025.7.1"
+
 from TP_Requests.http import TP_HTTP_REQUEST
 from TP_HTTP_Request_Response_Parser import TP_HTTP_REQUEST_PARSER, TP_HTTP_RESPONSE_PARSER
 import json_duplicate_keys as jdks
 import glob, os, datetime, re, time
 
-Flows = dict()
+
 AUTO_LOGIN = dict()
 
-def kwvars(environments, vars=dict()):
-	vars = dict()
+def run_flows(FlowFolder, add_object=dict(), update_object=dict(), delete_object=dict(), ReqTimeout=60, ReqDelaytime=0, sleeptime=20, separator="||", parse_index="$", dupSign_start="{{{", dupSign_end="}}}", ordered_dict=False, skipDuplicated=True, update_content_length=True, proxy_server=None, verbose=True):
+	Flows = dict()
 
-	for importLib in environments["libs"]:
-		exec(importLib)
+	def kwvars(Flows, environments):
+		vars = dict()
 
-	for name in environments["vars"]:
-		if environments["vars"][name]["runCode"]:
-			try:
-				vars[name] = None
-				if "LOOPVAR" in environments["vars"][name] and "CONDITION" in environments["vars"][name]:
-					for LOOPDATA in eval(environments["vars"][name]["LOOPVAR"]):
-						if eval(environments["vars"][name]["CONDITION"]):
-							vars[name] = eval(environments["vars"][name]["value"])
-							break
-				else:
-					vars[name] = eval(environments["vars"][name]["value"])
-			except Exception as e:
-				vars[name] = None
-		else:
-			vars[name] = environments["vars"][name]["value"]
+		for importLib in environments["libs"]: exec(importLib)
 
-	return vars
+		for name in environments["vars"]:
+			if environments["vars"][name]["runCode"]:
+				try:
+					vars[name] = "JSON_DUPLICATE_KEYS_ERROR"
+					if "LOOPVAR" in environments["vars"][name] and "CONDITION" in environments["vars"][name]:
+						for LOOPDATA in eval(environments["vars"][name]["LOOPVAR"]):
+							if eval(environments["vars"][name]["CONDITION"]):
+								vars[name] = eval(environments["vars"][name]["value"])
+								break
+					else:
+						vars[name] = eval(environments["vars"][name]["value"])
+				except Exception as e:
+					pass
+			else:
+				vars[name] = environments["vars"][name]["value"]
+
+		return vars
 
 
-def run_flows(FlowFolder, add_object=dict(), update_object=dict(), delete_object=dict(), ReqTimeout=60, ReqDelaytime=0, sleeptime=20, separator="||", parse_index="$", dupSign_start="{{{", dupSign_end="}}}", ordered_dict=False, update_content_length=True, proxy_server=None, verbose=True):
-	global Flows
-	RequestRules = jdks.load(os.path.join(FlowFolder, "rules.json"), dupSign_start=dupSign_start, dupSign_end=dupSign_end, _isDebug_=True)
+	RequestRules = jdks.load(os.path.join(FlowFolder, "rules.json"), _isDebug_=True)
 
 	total_rawReq = len(glob.glob1(FlowFolder, "raw-[0-9]*.req"))
 	i = 0
 	while i < total_rawReq:
 		reqNum = str(i+1)
-		try:
-			rawRequest = open(os.path.join(FlowFolder, "raw-{}.req".format(reqNum))).read()
-		except Exception as e:
-			rawRequest = open(os.path.join(FlowFolder, "raw-{}.req".format(reqNum)), "rb").read()
 
-		req = TP_HTTP_REQUEST(rawRequest, separator=separator, parse_index=parse_index, dupSign_start=dupSign_start, dupSign_end=dupSign_end, ordered_dict=ordered_dict)
+		Coding = "utf-8"
+		try:
+			Coding = RequestRules.get("flows")["value"][reqNum]["Coding"]
+		except Exception as e:
+			pass
+
+		rawRequest = open(os.path.join(FlowFolder, "raw-{}.req".format(reqNum)), encoding=Coding).read()
+
+		req = TP_HTTP_REQUEST(rawRequest, Coding, separator=separator, parse_index=parse_index, dupSign_start=dupSign_start, dupSign_end=dupSign_end, ordered_dict=ordered_dict, skipDuplicated=skipDuplicated)
 
 		if "PathParams" in RequestRules.get("flows"+separator+reqNum)["value"]:
 			PathParams = RequestRules.get("flows"+separator+reqNum+separator+"PathParams")["value"]
@@ -54,15 +60,13 @@ def run_flows(FlowFolder, add_object=dict(), update_object=dict(), delete_object
 						if PathParams[name].split("||",1)[0] == "AUTO_LOGIN":
 							value = AUTO_LOGIN[PathParams[name].split("||",1)[1]]
 						else:
-							value = PathParams[name].format(**kwvars(RequestRules.get("environments")["value"]))
+							value = PathParams[name].format(**kwvars(Flows, RequestRules.get("environments")["value"]))
 							if "JSON_DUPLICATE_KEYS_ERROR" in value:
 								if verbose: print(f"\x1b[31m[-] Could not get the {PathParams[name]} value for next request\x1b[0m")
-								Flows_Data = Flows
-								Flows = {}
 								return {
 									"flow": False,
 									"success": False,
-									"data": Flows_Data
+									"data": Flows
 								}
 
 						req.RequestParser.request_pathParams.update(name, value)
@@ -77,15 +81,13 @@ def run_flows(FlowFolder, add_object=dict(), update_object=dict(), delete_object
 						if QueryParams[name].split("||",1)[0] == "AUTO_LOGIN":
 							value = AUTO_LOGIN[QueryParams[name].split("||",1)[1]]
 						else:
-							value = QueryParams[name].format(**kwvars(RequestRules.get("environments")["value"]))
+							value = QueryParams[name].format(**kwvars(Flows, RequestRules.get("environments")["value"]))
 							if "JSON_DUPLICATE_KEYS_ERROR" in value:
 								if verbose: print(f"\x1b[31m[-] Could not get the {QueryParams[name]} value for next request\x1b[0m")
-								Flows_Data = Flows
-								Flows = {}
 								return {
 									"flow": False,
 									"success": False,
-									"data": Flows_Data
+									"data": Flows
 								}
 
 						req.RequestParser.request_queryParams.update(name, value)
@@ -100,15 +102,13 @@ def run_flows(FlowFolder, add_object=dict(), update_object=dict(), delete_object
 						if HTTPHeaders[name].split("||",1)[0] == "AUTO_LOGIN":
 							value = AUTO_LOGIN[HTTPHeaders[name].split("||",1)[1]]
 						else:
-							value = HTTPHeaders[name].format(**kwvars(RequestRules.get("environments")["value"]))
+							value = HTTPHeaders[name].format(**kwvars(Flows, RequestRules.get("environments")["value"]))
 							if "JSON_DUPLICATE_KEYS_ERROR" in value:
 								if verbose: print(f"\x1b[31m[-] Could not get the {HTTPHeaders[name]} value for next request\x1b[0m")
-								Flows_Data = Flows
-								Flows = {}
 								return {
 									"flow": False,
 									"success": False,
-									"data": Flows_Data
+									"data": Flows
 								}
 
 						req.RequestParser.request_headers.update(name, value)
@@ -123,15 +123,13 @@ def run_flows(FlowFolder, add_object=dict(), update_object=dict(), delete_object
 						if HTTPCookies[name].split("||",1)[0] == "AUTO_LOGIN":
 							value = AUTO_LOGIN[HTTPCookies[name].split("||",1)[1]]
 						else:
-							value = HTTPCookies[name].format(**kwvars(RequestRules.get("environments")["value"]))
+							value = HTTPCookies[name].format(**kwvars(Flows, RequestRules.get("environments")["value"]))
 							if "JSON_DUPLICATE_KEYS_ERROR" in value:
 								if verbose: print(f"\x1b[31m[-] Could not get the {HTTPCookies[name]} value for next request\x1b[0m")
-								Flows_Data = Flows
-								Flows = {}
 								return {
 									"flow": False,
 									"success": False,
-									"data": Flows_Data
+									"data": Flows
 								}
 
 						req.RequestParser.request_cookies.update(name, value)
@@ -146,22 +144,20 @@ def run_flows(FlowFolder, add_object=dict(), update_object=dict(), delete_object
 						if RequestBody[name].split("||",1)[0] == "AUTO_LOGIN":
 							value = AUTO_LOGIN[RequestBody[name].split("||",1)[1]]
 						else:
-							value = RequestBody[name].format(**kwvars(RequestRules.get("environments")["value"]))
+							value = RequestBody[name].format(**kwvars(Flows, RequestRules.get("environments")["value"]))
 							if "JSON_DUPLICATE_KEYS_ERROR" in value:
 								if verbose: print(f"\x1b[31m[-] Could not get the {RequestBody[name]} value for next request\x1b[0m")
-								Flows_Data = Flows
-								Flows = {}
 								return {
 									"flow": False,
 									"success": False,
-									"data": Flows_Data
+									"data": Flows
 								}
 
 						try:
 							datetype_ori = type(req.RequestParser.request_body.get("data"+separator+name)["value"])
 							datatype_new = type(eval(value))
 
-							if datetype_ori == datatype_new or datetype_ori in [int, float] and datatype_new in [int, float]:
+							if datetype_ori == datatype_new or datetype_ori in [int, float] and datatype_new in [int, float] or type(eval(value)) == bytes:
 								req.RequestParser.request_body.update("data"+separator+name, eval(value))
 							else:
 								req.RequestParser.request_body.update("data"+separator+name, value)
@@ -170,7 +166,7 @@ def run_flows(FlowFolder, add_object=dict(), update_object=dict(), delete_object
 					except Exception as e:
 						pass
 			else:
-				req.RequestParser.request_body.update("data", str(RequestBody).format(**kwvars(RequestRules.get("environments")["value"])))
+				req.RequestParser.request_body.update("data", str(RequestBody).format(**kwvars(Flows, RequestRules.get("environments")["value"])))
 				req.RequestParser.request_body.update("dataType", "unknown")
 
 
@@ -256,7 +252,7 @@ def run_flows(FlowFolder, add_object=dict(), update_object=dict(), delete_object
 		Flows[reqNum] = req.sendRequest(Host, Port, Scheme, ReqTimeout=ReqTimeout, update_content_length=update_content_length, proxy_server=proxy_server)
 
 		if verbose:
-			ResponseParser = TP_HTTP_RESPONSE_PARSER(Flows[reqNum]["rawResponse"])
+			ResponseParser = TP_HTTP_RESPONSE_PARSER(Flows[reqNum]["rawResponse"], separator=separator, parse_index=parse_index, dupSign_start=dupSign_start, dupSign_end=dupSign_end, ordered_dict=ordered_dict, skipDuplicated=skipDuplicated)
 
 			if req.RequestParser.request_method.upper() == "GET":
 				RequestMethod = f"\x1b[30;42m {req.RequestParser.request_method} \x1b[0m"
@@ -341,12 +337,10 @@ def run_flows(FlowFolder, add_object=dict(), update_object=dict(), delete_object
 
 			if not re.search(PATTERN_SuccessFlows, Flows[reqNum]["rawResponse"]):
 				if verbose: print("\x1b[1;31m[-] THE REQUEST FLOW HAS NOT BEEN COMPLETED SUCCESSFULLY. PLEASE CHECK AGAIN.\x1b[0m")
-				Flows_Data = Flows
-				Flows = {}
 				return {
 					"flow": True,
 					"success": False,
-					"data": Flows_Data
+					"data": Flows
 				}
 
 			if verbose: print("\x1b[1;34m[+] THE REQUEST FLOW HAS BEEN COMPLETED SUCCESSFULLY.\x1b[0m")
@@ -354,10 +348,8 @@ def run_flows(FlowFolder, add_object=dict(), update_object=dict(), delete_object
 		time.sleep(ReqDelaytime)
 		i += 1
 
-	Flows_Data = Flows
-	Flows = {}
 	return {
 		"flow": True,
 		"success": True,
-		"data": Flows_Data
+		"data": Flows
 	}

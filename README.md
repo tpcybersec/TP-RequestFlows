@@ -1,4 +1,4 @@
-<p align="center"><img src="./assets/TP-RequestFlows.png" height=200></p>
+<p align="center"><img src="https://raw.githubusercontent.com/tpcybersec/TP-RequestFlows/refs/heads/main/assets/TP-RequestFlows.png" height=200></p>
 
 # TP-RequestFlows - PyPI
 _A Python library for sending raw HTTP requests in a predefined sequence configured via a rules.json file. Supports automatic re-login when the session token expires_
@@ -88,6 +88,7 @@ The `rules.json` file defines the flow logic and dynamic behavior for the sequen
       "Host": "...",
       "Port": ...,
       "Scheme": "...",
+      "Coding": "utf-8",
       "PathParams": { ... },
       "QueryParams": { ... },
       "HTTPHeaders": { ... },
@@ -159,6 +160,7 @@ The `rules.json` file defines the flow logic and dynamic behavior for the sequen
     "Host": "example.com",
     "Port": 443,
     "Scheme": "https",
+    "Coding": "utf-8",
     "PathParams": {
       "userId": "{user_id}"
     },
@@ -183,6 +185,7 @@ The `rules.json` file defines the flow logic and dynamic behavior for the sequen
   | `Host`        | Target host name (e.g. `"example.com"`)                  |
   | `Port`        | Target port (e.g. `443` for HTTPS)                       |
   | `Scheme`      | Either `"http"` or `"https"`                             |
+  | `Coding`      |                                                          |
   | `PathParams`  | Values to replace path variables (e.g. `/user/<userId>`) |
   | `QueryParams` | URL query parameters (e.g. `?page=2`)                    |
   | `HTTPHeaders` | HTTP headers to include                                  |
@@ -451,6 +454,9 @@ The `delete_object` parameter lets you delete specific keys from request compone
 
 ---
 ## CHANGELOG
+#### [TP-RequestFlows v2025.7.1](https://github.com/tpcybersec/TP-RequestFlows/tree/2025.7.1)
+- [**Fixed**] Improve and fix some issues
+
 #### [TP-RequestFlows v2025.5.18](https://github.com/tpcybersec/TP-RequestFlows/tree/2025.5.18)
 - [**Added**] Support for dynamic variable declaration in `vars` using list iteration with conditions (`LOOPVAR`, `CONDITION`, `value`, `LOOPDATA`, `runCode`).
 - [**Fixed**] Several encoding issues when sending or processing request data.

@@ -1,4 +1,4 @@
-GET /my-account HTTP/2
+GET /my-account HTTP/1.1
 Host: ginandjuice.shop
 Cookie: AWSALB=avqg97vkXS04+1lButYpJ8Ilgy8yLS7K4KIq0y4HRJH1Q+yDnOwGqamrH4IAxc7XtlmrgxCfby2uF1PnPgg/KEwmuRVV9PsdBPpkX8Hjq0zg9X1Akmxif+0exiYT; AWSALBCORS=avqg97vkXS04+1lButYpJ8Ilgy8yLS7K4KIq0y4HRJH1Q+yDnOwGqamrH4IAxc7XtlmrgxCfby2uF1PnPgg/KEwmuRVV9PsdBPpkX8Hjq0zg9X1Akmxif+0exiYT; session=sqvKkywcSdWlDBygjBfKKwfkAnj9jaEg
 User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:137.0) Gecko/20100101 Firefox/137.0
