@@ -329,6 +329,13 @@ def run_flows(FlowFolder, add_object=dict(), update_object=dict(), delete_object
 					for k,v in RequestRules.get("AutoLogin||Extractors")["value"].items():
 						AUTO_LOGIN[k] = eval(v)
 					i -= 1
+					reqNum = str(i+1)
+				else:
+					return {
+						"flow": False,
+						"success": False,
+						"data": Flows
+					}
 
 		if reqNum == str(total_rawReq) and RequestRules.get("PATTERN_SuccessFlows")["value"] != "JSON_DUPLICATE_KEYS_ERROR" and type(RequestRules.get("PATTERN_SuccessFlows")["value"]) == str:
 			PATTERN_SuccessFlows = RequestRules.get("PATTERN_SuccessFlows")["value"]
